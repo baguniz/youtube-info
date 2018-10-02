@@ -15,10 +15,13 @@
         let lastData;
         let lastURL;
         const extractVideoID = (url) => {
+          url = decodeURIComponent(url)
           let matches;
-          if ((matches = url.match(/(?:https?\:\/\/)?(?:www\.)?youtu\.?be\/([^\?]+)/)) ||
-              (matches = url.match(/(?:https?\:\/\/)?(?:www\.)?youtube\.com\/watch[\?&]v=(.+)[&]?/)))
-            return matches[1]
+          if ((matches = url.match(/(?:https?\:\/\/)?(?:www\.)?youtu\.?be\/([^\?&]+)/)) ||
+              (matches = url.match(/(?:https?\:\/\/)?(?:www\.)?youtube\.com\/watch[\?&]v=(.+)[&]?/))) {
+                console.log(matches)
+                return matches[1]
+              }
           return null
         }
 
@@ -93,6 +96,7 @@
           document.querySelector('button[name="checkit"]').addEventListener('click', () => {
             let yt_url = document.querySelector('input[name="yt-url"]').value
             let yt_v_id = encodeURIComponent(extractVideoID(yt_url))
+            console.log(yt_v_id)
 
             if (yt_v_id === null) return;
   
@@ -102,7 +106,7 @@
             let text = lastData.title + "\r\n" + lastURL
             copyText(text)
           })
-          document.addEventListener('popstate', e => {
+          window.addEventListener('popstate', e => {
             console.info(e)
           })
           
