@@ -68,6 +68,7 @@
                   let stateUrl = 'https://youtu.be/' + id
                   var stateObj = {data: data, url: stateUrl};
                   history.pushState(stateObj, 'Baguniz :: youtube-info - ' + data.title, "/#/" + stateUrl);
+                  input_yt_url.value = stateUrl
                   lastURL = stateUrl
                 }
               }
