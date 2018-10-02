@@ -25,7 +25,7 @@
             url = decodeURIComponent(url)
             let matches;
             if ((matches = url.match(/(?:https?\:\/\/)?(?:www\.)?youtu\.?be\/([^\?&]+)/)) ||
-                (matches = url.match(/(?:https?\:\/\/)?(?:www\.)?youtube\.com\/watch[\?&]v=([^\?&].+)/))) {
+                (matches = url.match(/(?:https?\:\/\/)?(?:www\.)?youtube\.com\/watch[\?&]v=([^\?&]+)/))) {
                   return matches[1]
                 }
             return null
