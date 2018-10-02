@@ -6,18 +6,68 @@
       <meta name="viewport" content="width=device-width, initial-scale=1">
 
       <title>Baguniz :: youtube-info</title>
-      <!--<link rel="stylesheet" href="styles/main.css">-->
+      <link rel="stylesheet" href="styles/main.css">
       <link rel="stylesheet" href="styles/jsontree.css">
 
       <script src="js/tressa.js"></script>
       <script src="js/jsontree.js"></script>
       <script>
+        let lastData;
+        let lastURL;
         const extractVideoID = (url) => {
           let matches;
           if ((matches = url.match(/(?:https?\:\/\/)?(?:www\.)?youtu\.?be\/([^\?]+)/)) ||
               (matches = url.match(/(?:https?\:\/\/)?(?:www\.)?youtube\.com\/watch[\?&]v=(.+)[&]?/)))
             return matches[1]
           return null
+        }
+
+        const getYTVideoInfo = (id) => {
+            let xhr = new XMLHttpRequest()
+            document.querySelector('#wrapper').innerText = 'Fetching..'
+            document.querySelector('button[name="copyinfo"]').classList.add('hidden')
+            xhr.open("GET",
+              "https://cors-anywhere.herokuapp.com/https://www.youtube.com/oembed?url=http%3A//youtube.com/watch%3Fv%3D" + id +"&format=json"); // assuming you’re hosting it locally
+            xhr.setRequestHeader("Content-type", 'application/json');
+            xhr.onloadend = function() {
+              if(xhr.status == 404) 
+                  document.querySelector('#wrapper').innerText = 'Invalid video id.'
+            }
+            xhr.onreadystatechange = function () {
+              if (xhr.readyState === 4) {
+                wrapper.innerHTML = ''
+
+                let data;
+                try {
+                  data = JSON.parse(xhr.response)
+                } catch(e) {
+                  document.querySelector('#wrapper').innerText = 'Fetch Error.'
+                }
+                lastData = data;
+                
+                let tree = jsonTree.create(data, wrapper)
+
+                tree.expand(function(node) {
+                  return node.childNodes.length < 2
+                })
+
+                document.querySelector('button[name="copyinfo"]').classList.remove('hidden')
+
+                var stateObj = {data : data};
+                history.pushState(stateObj, 'Baguniz :: youtube-info - ' + data.title, "/#/https://youtu.be/" + id);
+                lastURL = 'https://youtu.be/' + id
+              }
+            }
+            xhr.send();
+        }
+
+        const copyText = (text) => {
+          let textArea = document.createElement('textarea')
+          textArea.value = text;
+          document.body.appendChild(textArea)
+          textArea.select()
+          document.execCommand('Copy')
+          textArea.remove()
         }
   
         const unitTestForExtractVideoID = () => {
@@ -39,45 +89,44 @@
           // Do perform unit test
           unitTestForExtractVideoID()
 
+          // Register event handler
           document.querySelector('button[name="checkit"]').addEventListener('click', () => {
             let yt_url = document.querySelector('input[name="yt-url"]').value
             let yt_v_id = encodeURIComponent(extractVideoID(yt_url))
 
             if (yt_v_id === null) return;
   
-            let xhr = new XMLHttpRequest()
-            xhr.open("GET",
-              "https://cors-anywhere.herokuapp.com/https://www.youtube.com/oembed?url=http%3A//youtube.com/watch%3Fv%3D" + yt_v_id +"&format=json"); // assuming you’re hosting it locally
-            xhr.setRequestHeader("Content-type", 'application/json');
-            xhr.onreadystatechange = function () {
-              if (xhr.readyState === 4) {
-                wrapper.innerHTML = ''
-
-                let data;
-                try {
-                  data = JSON.parse(xhr.response)
-                } catch(e) { }
-                
-                let tree = jsonTree.create(data, wrapper)
-
-                tree.expand(function(node) {
-                  return node.childNodes.length < 2
-                })
-
-              }
-            }
-            xhr.send();
+            getYTVideoInfo(yt_v_id)
           })
+          document.querySelector('button[name="copyinfo"]').addEventListener('click', () => {
+            let text = lastData.title + "\r\n" + lastURL
+            copyText(text)
+          })
+          document.addEventListener('popstate', e => {
+            console.info(e)
+          })
+          
+          // Separate and parse URL
+          let v_url = document.location.href.match(/#\/([^\?].+)/)
+          if (v_url) {
+            let v_id = extractVideoID(v_url[1])
+            if (v_id) {
+              document.querySelector('input[name="yt-url"]').value = v_url[1]
+              getYTVideoInfo(v_id)
+            }
+          }
         })
   
+
       </script>
   
     </head>
     <body>
       <h1>Baguniz youtube-info</h1>
-      <h2>A service that simply imports information from a youtube video.</h2>
+      <h2>A page that simply imports information from a youtube video.</h2>
       <input type="text" name="yt-url">
       <button type="submit" name="checkit">Submit</button>
+      <button name="copyinfo" class="hidden">Copy info</button>
       <div id="wrapper"></div>
     </body>
     
